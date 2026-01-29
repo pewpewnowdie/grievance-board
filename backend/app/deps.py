@@ -41,8 +41,8 @@ def get_current_user(
 def manager_only(user=Depends(get_current_user)):
     """
     Only allows access if the user is a manager.
-    Raises 403 Forbidden for QC users.
+    Raises 403 Forbidden for non-manager users.
     """
-    if user.role != "manager":
+    if user.role.lower() != "manager":
         raise HTTPException(status_code=403, detail="Manager access required")
     return user

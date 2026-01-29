@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from ..deps import get_current_user, manager_only, get_db
+from ..deps import get_current_user, get_db
 from ..models import Report, Grievance
 from ..schemas import ReportCreate, ReportResponse
+from ..serializers import serialize_report
 
 router = APIRouter(prefix="/reports", tags=["Reports"])
 
@@ -22,22 +23,23 @@ def create_report(payload: ReportCreate, user=Depends(get_current_user), db: Ses
     db.add(report)
     db.commit()
     db.refresh(report)
-    return report
+    return serialize_report(report)
 
 @router.get("/", response_model=List[ReportResponse])
-def list_reports(user=Depends(get_current_user), db: Session = Depends(get_db)):
-    return db.query(Report).all()
+def list_reports(db: Session = Depends(get_db)):
+    reports = db.query(Report).all()
+    return [serialize_report(r) for r in reports]
 
 @router.get("/{report_id}", response_model=ReportResponse)
-def get_report(report_id: int, user=Depends(get_current_user), db: Session = Depends(get_db)):
+def get_report(report_id: int, db: Session = Depends(get_db)):
     report = db.get(Report, report_id)
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
-    return report
+    return serialize_report(report)
 
 @router.get("/by-grievance/{grievance_id}", response_model=List[ReportResponse])
-def reports_by_grievance(grievance_id: int, user=Depends(get_current_user), db: Session = Depends(get_db)):
+def reports_by_grievance(grievance_id: int, db: Session = Depends(get_db)):
     grievance = db.get(Grievance, grievance_id)
     if not grievance:
         raise HTTPException(status_code=404, detail="Grievance not found")
-    return grievance.reports
+    return [serialize_report(r) for r in grievance.reports]

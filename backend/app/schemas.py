@@ -1,21 +1,28 @@
 from pydantic import BaseModel
 from typing import List, Optional
+from datetime import datetime
 
-class UserBase(BaseModel):
+# ----------------------------
+# User
+# ----------------------------
+class UserInfo(BaseModel):
+    id: int
     name: str
     email: str
-    role: str
 
-class UserCreate(UserBase):
-    password: str
-
-class UserResponse(UserBase):
+# ----------------------------
+# Reports
+# ----------------------------
+class ReportOut(BaseModel):
     id: int
+    content: str
+    is_anonymous: bool
+    created_at: Optional[datetime] = None
+    user: Optional[UserInfo] = None
 
-    class Config:
-        from_attributes = True
-
+# ----------------------------
 # Grievances
+# ----------------------------
 class GrievanceCreate(BaseModel):
     title: str
     description: str
@@ -27,12 +34,16 @@ class GrievanceResponse(BaseModel):
     description: str
     status: str
     is_anonymous: bool
-    reporter_id: Optional[int]
+    created_at: Optional[datetime] = None
+    user: Optional[UserInfo] = None
+    reports: List[ReportOut] = []
 
     class Config:
         from_attributes = True
 
-# Reports
+# ----------------------------
+# Report create
+# ----------------------------
 class ReportCreate(BaseModel):
     grievance_id: int
     content: str
@@ -43,12 +54,16 @@ class ReportResponse(BaseModel):
     grievance_id: int
     content: str
     is_anonymous: bool
-    reporter_id: Optional[int]
+    created_at: Optional[datetime] = None
+    reporter_id: Optional[int] = None
+    user: Optional[UserInfo] = None
 
     class Config:
         from_attributes = True
 
+# ----------------------------
 # Auth
+# ----------------------------
 class LoginRequest(BaseModel):
     email: str
     password: str
